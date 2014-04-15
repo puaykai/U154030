@@ -25,8 +25,6 @@ public class LSDSCSensor implements stimulator.Sensor{
 	 * */
 	private double getNextDataPoint(){
 		
-		//current_reading = Math.abs(rand.nextDouble())+20;
-		
 		return  current_reading;
 	}
 	
@@ -41,8 +39,6 @@ public class LSDSCSensor implements stimulator.Sensor{
 	 * */
 	@Override
 	public boolean fetchRequest(String request) {
-		
-		//System.out.println("Sensor received: "+request);
 		
 		if(request.length() != number_of_bits_of_maximum_askable) return false;
 		
@@ -71,17 +67,10 @@ public class LSDSCSensor implements stimulator.Sensor{
 		//Check if the server wants uncoded readings, then send the IEEE double bit string
 		if(number_of_bits_requested == maximum_number_of_bits_askable){
 			
-			//System.out.println("Encoding in IEEE: "+Long.toBinaryString(Double.doubleToRawLongBits(next_reading)));
-			
 			return tools.doubleToBinaryString(next_reading);
 		}
 		
 		int modded_index = code_book.getIndex(next_reading) % ((int) Math.pow(2, number_of_bits_requested));
-		
-		//System.out.println("modded_index : "+modded_index);
-		
-		//pad needed with  0 in front
-		//String bit_string = tools.pad0ToFront(Integer.toBinaryString(modded_index),number_of_bits_requested);
 		
 		return code_book.integerToBinaryString(modded_index, number_of_bits_requested);
 	}

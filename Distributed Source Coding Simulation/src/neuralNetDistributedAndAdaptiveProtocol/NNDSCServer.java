@@ -93,9 +93,6 @@ public class NNDSCServer implements stimulator.Server{
 		obtained_sensor_reading = new boolean[this.number_of_sensors];
 		past_sensor_readings = new double[this.number_of_sensors][this.M];
 		
-		//neural_net_input = new double[this.number_of_sensors][this.amount_of_neural_net_input_to_keep][];
-		
-
 		//**********************Neural Network Initialization
 		
 		array_of_neural_nets = new BasicNetwork[this.number_of_sensors];
@@ -133,9 +130,6 @@ public class NNDSCServer implements stimulator.Server{
 	private void updateInputData(int id){
 		
 		input_datas[id].addDataPoint(this.getFeature(id), this.current_sensor_readings[id]);
-		//System.out.println("UPDATE INPUT DATA::::");
-		//printArray(this.getFeature(id));
-		//System.out.println(id+", Input data size: "+input_datas[id].size());
 	}
 	
 	/**
@@ -145,7 +139,6 @@ public class NNDSCServer implements stimulator.Server{
 	private void updateVarianceOfPrediction(int sensor_id){
 		
 		double N = current_sensor_readings[sensor_id] - predicted_sensor_readings[sensor_id][0];
-		//System.out.println("Sensor "+sensor_id+" Prediction error: "+N +" Original Sigma: "+sigma[sensor_id]);
 		if(round_number==0){
 			
 			sigma[sensor_id] = N * N;
@@ -158,7 +151,6 @@ public class NNDSCServer implements stimulator.Server{
 			
 			sigma[sensor_id] = (1-gamma)*sigma[sensor_id] + gamma * N * N;
 		}
-		//System.out.println("Sensor "+sensor_id+" New Sigma: "+sigma[sensor_id]);
 	}
 	
 	/***
@@ -170,10 +162,7 @@ public class NNDSCServer implements stimulator.Server{
 		Train train = new ResilientPropagation(array_of_neural_nets[id],input_datas[id].getTrainingSet());
 		
 		int epoch =0;
-		//System.out.println("EPOCH: "+epoch+" Error: "+train.getError());
 		while(train.getError()>error_allowed && epoch<max_epoch){
-			
-			//System.out.println("EPOCH: "+epoch+" Error: "+train.getError());
 			
 			train.iteration();
 			epoch++;
@@ -185,24 +174,11 @@ public class NNDSCServer implements stimulator.Server{
 	 * */
 	private void calculatePrediction(int sensor_id){
 		//
-		//System.out.println("Calculating Prediction for: "+sensor_id);
 		double[][] input = getFeatureMatrix(sensor_id);
 		double[][] normalized_input = input_datas[sensor_id].normalize(input, new double[][]{{1}}, false).get(0);
-		/*
-		for(int i=0; i< normalized_input.length; i++){
-			for(int j=0; j<normalized_input[i].length; j++){
-				
-				System.out.print(normalized_input[i][j]+", ");
-			}
-			System.out.println("");
-		}
-		*/
 		double normalized_data =array_of_neural_nets[sensor_id].compute(new BasicNeuralData(normalized_input[0])).getData(0);
-		//double normalized_data = array_of_neural_nets[sensor_id].compute( (new BasicNeuralDataSet(getFeatureMatrix(sensor_id),new double[][]{{0}})).get(0).getInput() ).getData(0);
 		
 		predicted_sensor_readings[sensor_id][0] = input_datas[sensor_id].unnormalize(normalized_data, this.M+sensor_id);
-		//(heta.getMatrix(sensor_id, sensor_id,0,M + number_of_sensors-1).times(getFeatureMatrix(sensor_id))).get(0, 0);
-		//System.out.println("Predicted : "+predicted_sensor_readings[sensor_id][0]);
 	}
 	
 	/**
@@ -216,8 +192,6 @@ public class NNDSCServer implements stimulator.Server{
 			
 			double temp_value = past_sensor_readings[sensor_id][i];
 			
-			//System.out.println("past temp_value: "+temp_value);
-			
 			matrix_shell[0][i] = temp_value;
 
 		}
@@ -226,13 +200,8 @@ public class NNDSCServer implements stimulator.Server{
 			
 			double temp_value = current_sensor_readings[i];
 			
-			//System.out.println("others temp_value: "+temp_value);
-			
 			matrix_shell[0][i+this.M] = temp_value;
 		}
-		
-		//System.out.println("In the getFeatureMatrix");
-		//printArray(matrix_shell);
 		
 		return matrix_shell;
 	}
@@ -245,8 +214,6 @@ public class NNDSCServer implements stimulator.Server{
 			
 			double temp_value = past_sensor_readings[sensor_id][i];
 			
-			//System.out.println("past temp_value: "+temp_value);
-			
 			matrix_shell[i] = temp_value;
 
 		}
@@ -255,13 +222,8 @@ public class NNDSCServer implements stimulator.Server{
 			
 			double temp_value = current_sensor_readings[i];
 			
-			//System.out.println("others temp_value: "+temp_value);
-			
 			matrix_shell[i+this.M] = temp_value;
 		}
-		
-		//System.out.println("In the getFeatureMatrix");
-		//printArray(matrix_shell);
 		
 		return matrix_shell;
 	}
@@ -277,7 +239,6 @@ public class NNDSCServer implements stimulator.Server{
 		}
 		
 		past_sensor_readings[id][0] = new_reading;
-		//System.out.println("UPDATING PAST SENSOR : "+new_reading+" ; "+past_sensor_readings[id][0]);
 	}
 
 	/**
@@ -290,7 +251,6 @@ public class NNDSCServer implements stimulator.Server{
 	@Override
 	public String sendRequest(int sensor_id) {
 		
-		//System.out.println("IN SERVER: sigma["+sensor_id+"] is "+sigma[sensor_id]);
 		if(is_first_round[sensor_id] || sensor_id ==0 || round_number<M){
 			
 			requested_bits[sensor_id] = maximum_number_of_bits_askable;
@@ -305,7 +265,6 @@ public class NNDSCServer implements stimulator.Server{
 		i = Math.max(0,  i);//request no less than 0 bits
 		
 		requested_bits[sensor_id] = i;
-		//System.out.println("Asking "+sensor_id +" to send "+ i+ " bits");
 		
 		String bit_string = tools.pad0ToFront(Integer.toBinaryString(i),bits_needed_to_represent_maximum_askable);//pad it to make length 6
 		
@@ -321,18 +280,12 @@ public class NNDSCServer implements stimulator.Server{
 	@Override
 	public boolean receiveData(String data, int id) {
 		
-		//System.out.println("requested_bits: "+requested_bits[id]);
-		//System.out.println("received data length: "+data.length());
-		
 		if(id!=0 &&round_number>=K && data.length() != requested_bits[id]+1 && data.length() !=0){
-			//System.out.println("HERE");
 			 return false;
 		}
 		
 		if(!is_first_round[id] && id!=0 && ! obtained_sensor_reading[0]){
 			
-			
-			//System.out.println("THERE");
 			 return false;
 		}
 		
@@ -345,20 +298,11 @@ public class NNDSCServer implements stimulator.Server{
 			
 			obtained_sensor_reading[id] = true;
 			
-			//System.out.println("FULL decoded: "+current_sensor_readings[id]);
-			
 		}else{
 			
 			current_sensor_readings[id] = code_book.getDecodedValue(current_sensor_readings[0], data);
-			//System.out.println(data);
-			//System.out.println("Decoded Value: "+current_sensor_readings[id]);
 			obtained_sensor_reading[id] = true;
 		}
-		
-		//System.out.println("current_sensor_readings");
-		//printArray(current_sensor_readings);
-		//System.out.println("past_sensor_readings");
-		//printArray(past_sensor_readings);
 		
 		//calculate Y, prediction values, only after M readings
 		
@@ -380,28 +324,19 @@ public class NNDSCServer implements stimulator.Server{
 		}
 		
 			
-		//this.calculatePrediction(id);
-		//this.updateVarianceOfPrediction(id);
-
-		//System.out.println("Prediction "+predicted_sensor_readings[id][0]+" actual sensor reading: "+current_sensor_readings[id]+ " diff: "+ (current_sensor_readings[id]- predicted_sensor_readings[id][0]));
 		diff[id] = current_sensor_readings[id]- predicted_sensor_readings[id][0];
 		boolean all_received = true;
 		for(int i=0; i<number_of_sensors; i++){
 			
 			if( ! obtained_sensor_reading[i]){
 				
-				//System.out.println("IN SERVER: Have not received from "+i);
 				all_received = false; break;
 			}
 		}
 		if(all_received){
 			Arrays.fill(obtained_sensor_reading, false);
 			
-			//if(round_number<=K) this.updateWeights(); //TODO trains neural nets
-
 			round_number++;
-			
-			//System.out.println("IN SERVER : ROUND NUMBER: "+round_number);
 			
 			double average=0.0;
 			for(int i=0; i<number_of_sensors; i++){
@@ -423,7 +358,6 @@ public class NNDSCServer implements stimulator.Server{
 
 	public static void main(String[] args){
 		double delta = 0.0001;
-		//double sigma = 0.022727272726220802;
 		double sigma = 0.005;
 		double P_e = 0.01;
 		
@@ -431,7 +365,6 @@ public class NNDSCServer implements stimulator.Server{
 		i = Math.min(i, 63); //request not more that 63 bits
 		i = Math.max(0,  i);//request no less than 0 bits
 		
-		//System.out.println(i);
 	}
 	
 	public static void  printArray(double[][] array){

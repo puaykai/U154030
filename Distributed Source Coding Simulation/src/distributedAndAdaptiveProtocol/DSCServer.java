@@ -108,7 +108,6 @@ public class DSCServer implements stimulator.Server{
 		for(int sensor_id=0; sensor_id<number_of_sensors; sensor_id++){
 			
 			double N = current_sensor_readings[sensor_id] - predicted_sensor_readings[sensor_id][0];
-			//System.out.println(sensor_id+" diff: "+N);
 			for(int t=0; t<M;t++){
 				
 				change_matrix[sensor_id][t] = meu * N * past_sensor_readings[sensor_id][t];
@@ -119,13 +118,7 @@ public class DSCServer implements stimulator.Server{
 			}
 		}
 		
-		//System.out.println("Change matrix");
-		//printArray(change_matrix);
-		//System.out.println("heta");
-		//printArray(heta.getArray());
 		heta.plusEquals(new Matrix(change_matrix));
-		//System.out.println("New heta: ");
-		//printArray(heta.getArray());
 	}
 	
 	/**
@@ -135,7 +128,6 @@ public class DSCServer implements stimulator.Server{
 	private void updateVarianceOfPrediction(int sensor_id){
 		
 		double N = current_sensor_readings[sensor_id] - predicted_sensor_readings[sensor_id][0];
-		//System.out.println("Sensor "+sensor_id+" Prediction error: "+N +" Original Sigma: "+sigma[sensor_id]);
 		if(round_number==0){
 			
 			sigma[sensor_id] = N * N;
@@ -148,7 +140,6 @@ public class DSCServer implements stimulator.Server{
 			
 			sigma[sensor_id] = (1-gamma)*sigma[sensor_id] + gamma * N * N;
 		}
-		//System.out.println("Sensor "+sensor_id+" New Sigma: "+sigma[sensor_id]);
 	}
 	
 	/**
@@ -158,7 +149,6 @@ public class DSCServer implements stimulator.Server{
 		
 		predicted_sensor_readings[sensor_id][0] = (heta.getMatrix(sensor_id, sensor_id,0,M + number_of_sensors-1).times(getFeatureMatrix(sensor_id))).get(0, 0);
 		
-		//System.out.println("Predicted : "+predicted_sensor_readings[sensor_id][0]);
 	}
 	
 	/**
@@ -172,8 +162,6 @@ public class DSCServer implements stimulator.Server{
 			
 			double temp_value = past_sensor_readings[sensor_id][i];
 			
-			//System.out.println("past temp_value: "+temp_value);
-			
 			matrix_shell[i][0] = temp_value;
 
 		}
@@ -182,13 +170,8 @@ public class DSCServer implements stimulator.Server{
 			
 			double temp_value = current_sensor_readings[i];
 			
-			//System.out.println("others temp_value: "+temp_value);
-			
 			matrix_shell[i+this.M][0] = temp_value;
 		}
-		
-		//System.out.println("In the getFeatureMatrix");
-		//printArray(matrix_shell);
 		
 		return new Matrix(matrix_shell);
 	}
@@ -204,7 +187,6 @@ public class DSCServer implements stimulator.Server{
 		}
 		
 		past_sensor_readings[id][0] = new_reading;
-		//System.out.println("UPDATING PAST SENSOR : "+new_reading+" ; "+past_sensor_readings[id][0]);
 	}
 
 	/**
@@ -217,7 +199,6 @@ public class DSCServer implements stimulator.Server{
 	@Override
 	public String sendRequest(int sensor_id) {
 		
-		//System.out.println("IN SERVER: sigma["+sensor_id+"] is "+sigma[sensor_id]);
 		if(is_first_round[sensor_id] || sensor_id ==0 || round_number<M){
 			
 			requested_bits[sensor_id] = maximum_number_of_bits_askable;
@@ -232,7 +213,6 @@ public class DSCServer implements stimulator.Server{
 		i = Math.max(0,  i);//request no less than 0 bits
 		
 		requested_bits[sensor_id] = i;
-		//System.out.println("Asking "+sensor_id +" to send "+ i+ " bits");
 		
 		String bit_string = tools.pad0ToFront(Integer.toBinaryString(i),bits_needed_to_represent_maximum_askable);//pad it to make length 6
 		
@@ -248,8 +228,6 @@ public class DSCServer implements stimulator.Server{
 	@Override
 	public boolean receiveData(String data, int id) {
 		
-		//System.out.println("requested_bits: "+requested_bits[id]);
-		//System.out.println("data length: "+data.length());
 		
 		if(id!=0 &&round_number>=K && data.length() != requested_bits[id]+1  && data.length() !=0) return false;
 		
@@ -257,8 +235,6 @@ public class DSCServer implements stimulator.Server{
 		
 		//first_reading / first sensor everybody is un-coded, and is assumed to be correct
 		if(round_number<M||is_first_round[id] || id==0 || data.length()>=this.maximum_number_of_bits_askable){
-			
-			//System.out.println("Using IEEE");
 			
 			is_first_round[id] = false;
 			
@@ -269,15 +245,8 @@ public class DSCServer implements stimulator.Server{
 		}else{
 			
 			current_sensor_readings[id] = code_book.getDecodedValue(current_sensor_readings[0], data);
-			//System.out.println(data);
-			//System.out.println("Decoded Value: "+current_sensor_readings[id]);
 			obtained_sensor_reading[id] = true;
 		}
-		
-		//System.out.println("current_sensor_readings");
-		//printArray(current_sensor_readings);
-		//System.out.println("past_sensor_readings");
-		//printArray(past_sensor_readings);
 		
 		//calculate Y, prediction values, only after M readings
 		if(round_number>=M){
@@ -285,8 +254,6 @@ public class DSCServer implements stimulator.Server{
 			double temp = current_sensor_readings[id];
 			updatePastReadings(temp, id);
 			
-			//this.calculatePrediction(id);
-			//this.updateVarianceOfPrediction(id);
 			
 		}else{
 			
@@ -297,14 +264,12 @@ public class DSCServer implements stimulator.Server{
 		
 		this.calculatePrediction(id);
 		this.updateVarianceOfPrediction(id);
-		//System.out.println("Prediction "+predicted_sensor_readings[id][0]+" actual sensor reading: "+current_sensor_readings[id]+ " diff: "+ (current_sensor_readings[id]- predicted_sensor_readings[id][0]));
 		diff[id] = current_sensor_readings[id]- predicted_sensor_readings[id][0];
 		boolean all_received = true;
 		for(int i=0; i<number_of_sensors; i++){
 			
 			if( ! obtained_sensor_reading[i]){
 				
-				//System.out.println("IN SERVER: Have not received from "+i);
 				all_received = false; break;
 			}
 		}
@@ -315,14 +280,12 @@ public class DSCServer implements stimulator.Server{
 			
 			round_number++;
 			
-			//System.out.println("IN SERVER : ROUND NUMBER: "+round_number);
 			
 			double average=0.0;
 			for(int i=0; i<number_of_sensors; i++){
 				
 				average += Math.abs(diff[i]);
 			}
-			//System.out.println("Total prediction error: "+average);
 			
 		}
 		
@@ -335,36 +298,6 @@ public class DSCServer implements stimulator.Server{
 		return 0;
 	}
 
-	public static void main(String[] args){
-		/*
-		Matrix heta = Matrix.identity(2, 2);
-		
-		Matrix alpha = Matrix.random(2,2);
-		
-		printArray(alpha.getArray());
-		
-		printArray((heta.times(alpha)).getArray());
-		
-		Matrix beta = Matrix.random(3, 4);
-		
-		System.out.println("Row: "+beta.getRowDimension());
-		System.out.println("Col: "+beta.getColumnDimension());
-		
-		Matrix a = Matrix.random(3,1);
-		Matrix b = Matrix.random(1,3);
-		
-		printArray((b.times(a)).getArray());
-		
-		System.out.println(b.times(a).get(0, 0));
-		
-		printArray(beta.getArray());
-		
-		printArray(beta.getMatrix(0,0, 0,3).getArray());
-		
-		*/
-		
-		
-	}
 	
 	public static void  printArray(double[][] array){
 		

@@ -50,8 +50,6 @@ public class CodeBook {
 		
 		double delta = this.getD() * Math.pow(2, code_string.length());
 		
-		//System.out.println(Math.pow(2, code_string.length())+"*delta");
-		
 		double offset = 0.0;
 		
 		for(int i=0 ; i<code_string.length(); i++){
@@ -63,13 +61,9 @@ public class CodeBook {
 		
 		offset *= this.getD();
 		
-		//System.out.println("offset: "+offset);
-		
 		double multiple = (side_information - offset) / delta;
 		
 		double fraction_part_of_integral_multiple = multiple - Math.floor(multiple);
-		
-		//System.out.println("fraction_part_of_integral_multiple: "+fraction_part_of_integral_multiple);
 		
 		int integral_multiple;
 		
@@ -78,20 +72,14 @@ public class CodeBook {
 		if(Math.abs(1 - fraction_part_of_integral_multiple)<Math.abs(fraction_part_of_integral_multiple)){
 			
 			//closer to 1
-			//System.out.println("It is closer to 1");
-			
 			integral_multiple = (int) Math.ceil(multiple);
 			
 		}else{
 			
 			//closer to 0
-			//System.out.println("It is closer 0");
-			
 			integral_multiple = (int) Math.floor(multiple);
 			
 		}
-		
-		//System.out.println("Integral Multiple: "+integral_multiple);
 		
 		return delta * integral_multiple + offset;
 	}
@@ -105,6 +93,7 @@ public class CodeBook {
 	}
 
 	public static void main(String[] args){
+		//test
 		
 		CodeBook cb = new CodeBook();
 		String data = "0100000000110100111001000101100001011101001011001100011001110111";
